@@ -1,11 +1,10 @@
-# magento2-docker-compose
+# Working with Old Node and Gulp setup for Client in Docker Compose setup
 
-Docker files to run Magento 2 in docker-compose setup.
+Docker files to run Node 8 project
 
 
-If elasticsearch is escaping with exit code 1. Increase your virtual mechine map count
-
-sudo sysctl -w vm.max_map_count=262144
+Youtube video
+https://www.youtube.com/watch?v=5xZ0j0TsdtU
 
 
 
