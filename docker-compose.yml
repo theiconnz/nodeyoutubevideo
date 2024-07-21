@@ -1,0 +1,86 @@
+version: '3'
+
+services:
+  webchantal:
+    build:
+      context: docker/apache
+      args:
+        PROJECT_DOMAIN: ${PROJECT_DOMAIN}
+        PROJECT_ROOT: ${PROJECT_ROOT}
+    depends_on:
+      - phpchantal
+      - mysqlchantal
+    ports:
+      - ${PORT_NGINX}:80
+    volumes:
+      - ${PROJECT_PATH}:/var/www/project:cached
+      - ./var/data/httpd/logs:/usr/local/apache2/logs
+    links:
+      - phpchantal
+    networks:
+      - nodevideo
+
+
+  phpchantal:
+    build:
+      context: docker/php
+      args:
+        USER_ID: ${USER_ID}
+        PHP_TIMEZONE: ${PHP_TIMEZONE}
+    links:
+      - mysqlchantal
+    volumes:
+      - ${PROJECT_PATH}:/var/www/project
+      - ./var/data/php/workspace:/var/www/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      HISTFILE: /var/www/workspace/.bash_history
+      PROMPT_COMMAND: history -a
+      XDEBUG_CONFIG: remote_host=host.docker.internal
+    depends_on:
+      - mysqlchantal
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - nodevideo
+
+
+  phpmyadminchantal:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - '${PORT_PHPMYADMIN}:80'
+    depends_on:
+      - mysqlchantal
+    environment:
+      PMA_HOST: mysqlchantal
+    networks:
+      - nodevideo
+
+  mysqlchantal:
+      image: ${MYSQL_IMAGE}
+      container_name: mysql-chantalstore-58
+      restart: always
+      command: --max_allowed_packet=75005856
+      environment:
+        - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+        - MYSQL_DATABASE=${MYSQL_DATABASE}
+      volumes:
+        - ${PROJECT_SQL_DB}:/var/lib/mysql
+        - ${PROJECT_SQL_PATH}:/docker-entrypoint-initdb.d
+      ports:
+        - '${PORT_MYSQL}:3306'
+      networks:
+        - nodevideo
+
+#networks:
+#  magento2:
+#    external:
+#      name: m2
+      
+# Change to below network service if it returns msg="network magento2: network.external.name is deprecated in favor of network.name"
+networks:
+  nodevideo:
+    name: nodevideo
+    external: true
